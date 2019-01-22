@@ -1,7 +1,7 @@
 let mongoose = require("mongoose");
 let validator = require("validator");
 let jwt = require("jsonwebtoken");
-let _=  require("lodash");
+let _ = require("lodash");
 
 
 let UserSchema = new mongoose.Schema({
@@ -48,6 +48,24 @@ UserSchema.methods.generateAuthToken = function () {
         return token;
     });
 
+};
+
+UserSchema.statics.findByToken = function (token) {
+    let User = this;
+    let decoded;
+    try {
+        decoded = jwt.verify(token, "secret");
+    } catch (e) {
+        /*return new Promise((resolve, reject) => {
+            reject();
+        });*/
+        return Promise.reject("Cannot authenticate");
+    }
+    return User.findOne({
+        "_id": decoded._id,
+        "tokens.access": "auth",
+        "tokens.token": token
+    });
 };
 
 let User = mongoose.model("User", UserSchema);

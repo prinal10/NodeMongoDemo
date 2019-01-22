@@ -11,9 +11,11 @@ let {ObjectID} = require("mongodb");
 let {User} = require("./models/User.js");
 let {ToDo} = require("./models/ToDo.js");
 let {mongoose} = require("./db/mongoose.js");
+let {authenticate} = require("./middleware/authenticate");
 
 let app = express();
 app.use(bodyParser.json());
+
 
 app.post("/todos", (request, response) => {
     var todo = new ToDo(request.body);
@@ -45,6 +47,10 @@ app.post("/users", (request, response) => {
         console.log(error);
         response.status(400).send(error);
     });
+});
+
+app.get("/users/me", authenticate, (request, response) => {
+    response.send(request.user);
 });
 
 
