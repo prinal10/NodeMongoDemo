@@ -1,5 +1,6 @@
 let express = require("express");
 let bodyParser = require("body-parser");
+let {ObjectID} = require("mongodb");
 
 
 let {User} = require("./models/User.js");
@@ -32,6 +33,26 @@ app.get("/todos", (request, response) => {
         response.status(400);
         response.send(error);
     });
+});
+
+app.get("/todos/:id", (request, response) => {
+    let id = request.params.id;
+    if (!ObjectID.isValid(id)) {
+        response.status(404).send();
+    } else {
+        ToDo.findById(id).then((toDoObject) => {
+            if (!toDoObject) {
+                response.status(404).send();
+            } else {
+                response.send({
+                    toDoObject
+                });
+            }
+        }).catch((error) => {
+            console.log(error);
+            response.status(400).send(error);
+        });
+    }
 });
 
 
