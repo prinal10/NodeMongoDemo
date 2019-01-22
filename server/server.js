@@ -27,6 +27,23 @@ app.post("/todos", (request, response) => {
     });
 });
 
+app.post("/users", (request, response) => {
+    let body = _.pick(request.body, ["email", "password"]);
+    let newUser = new User(body);
+    newUser.save().then((savedUser) => {
+        if (!savedUser) {
+            console.log("Unable to save User document");
+            response.status(404).send();
+        } else {
+            console.log(JSON.stringify(savedUser, undefined, 2));
+            response.send(savedUser);
+        }
+    }).catch((error) => {
+        console.log(error);
+        response.status(400).send(error);
+    });
+});
+
 
 app.get("/todos", (request, response) => {
     ToDo.find().then((toDosArray) => {
