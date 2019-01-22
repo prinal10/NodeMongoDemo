@@ -22,6 +22,19 @@ app.post("/todos", (request, response) => {
 });
 
 
+app.get("/todos", (request, response) => {
+    ToDo.find().then((toDosArray) => {
+        response.send({
+            toDosArray
+        })
+    }).catch((error) => {
+        console.log(error);
+        response.status(400);
+        response.send(error);
+    });
+});
+
+
 app.listen(3000, () => {
     console.log("Server is running on port: ", 3000);
 });
