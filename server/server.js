@@ -58,6 +58,26 @@ app.get("/todos/:id", (request, response) => {
     }
 });
 
+app.delete("/todos/:id", (request, response) => {
+    let id = request.params.id;
+    if (!ObjectID.isValid(id)) {
+        response.status(404).send();
+    } else {
+        ToDo.findByIdAndRemove(id).then((deletedToDoDocument) => {
+            if (!deletedToDoDocument) {
+                console.log("Unable to find document by Id: ", id);
+                response.status(404).send();
+            } else {
+                console.log("Deleted: ", deletedToDoDocument);
+                response.send(deletedToDoDocument);
+            }
+        }).catch((error) => {
+            console.log(error);
+            response.status(400).send(error);
+        });
+    }
+});
+
 
 app.listen(port, () => {
     console.log("Server is running on port: ", port);
