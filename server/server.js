@@ -1,3 +1,6 @@
+const port = process.env.PORT || 3000;
+
+
 let express = require("express");
 let bodyParser = require("body-parser");
 let {ObjectID} = require("mongodb");
@@ -56,8 +59,8 @@ app.get("/todos/:id", (request, response) => {
 });
 
 
-app.listen(3000, () => {
-    console.log("Server is running on port: ", 3000);
+app.listen(port, () => {
+    console.log("Server is running on port: ", port);
 });
 
 
