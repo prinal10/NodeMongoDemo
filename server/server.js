@@ -1,6 +1,7 @@
 require("./config/config.js");
 const port = process.env.PORT;
 const _ = require("lodash");
+const bcrypt = require("bcryptjs");
 
 
 let express = require("express");
@@ -26,6 +27,17 @@ app.post("/todos", (request, response) => {
         console.log(error);
         response.status(400);
         response.send(error);
+    });
+});
+
+app.post("/users/login", (request, response) => {
+    let body = _.pick(request.body, ["email", "password"]);
+    User.findByCredentials(body.email, body.password).then((user) => {
+        user.generateAuthToken().then((token) => {
+            response.header("x-auth", token).send(user);
+        });
+    }).catch((error) => {
+        response.status(400).send(error);
     });
 });
 
