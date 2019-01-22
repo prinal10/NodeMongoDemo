@@ -1,4 +1,5 @@
 const port = process.env.PORT || 3000;
+const _ = require("lodash");
 
 
 let express = require("express");
@@ -75,6 +76,38 @@ app.delete("/todos/:id", (request, response) => {
             console.log(error);
             response.status(400).send(error);
         });
+    }
+});
+
+
+app.patch("/todos/:id", (request, response) => {
+    let id = request.params.id;
+    let body = _.pick(request.body, ["text", "completed"]);
+    if (!ObjectID.isValid(id)) {
+        response.status(404).send();
+    } else {
+        if (_.isBoolean(body.completed && body.completed)) {
+            body.completedAt = new Date().getTime();
+        } else {
+            body.completed = false;
+            body.completedAt = null;
+        }
+        ToDo.findByIdAndUpdate(id, {
+            $set: body
+        }, {
+            new: true
+        }).then((updatedDocument) => {
+            if (!updatedDocument) {
+                console.log("Unable to find document by Id: ", id);
+                response.status(404).send();
+            } else {
+                console.log("Updated: ", updatedDocument);
+                response.send(updatedDocument);
+            }
+        }).catch((error) => {
+            console.log(error);
+            response.status(400).send(error);
+        })
     }
 });
 
