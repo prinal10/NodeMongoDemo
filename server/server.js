@@ -17,6 +17,14 @@ let {authenticate} = require("./middleware/authenticate");
 let app = express();
 app.use(bodyParser.json());
 
+app.delete("/users/me/token", authenticate, (request, response) => {
+    User.removeToken(request.token).then((user) => {
+        response.status(200).send(user);
+    }).catch((error) => {
+        response.status(400).send(error);
+    });
+});
+
 
 app.post("/todos", (request, response) => {
     var todo = new ToDo(request.body);
