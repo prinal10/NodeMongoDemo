@@ -17,12 +17,13 @@ let {authenticate} = require("./middleware/authenticate");
 let app = express();
 app.use(bodyParser.json());
 
-app.delete("/users/me/token", authenticate, (request, response) => {
-    User.removeToken(request.token).then((user) => {
+app.delete("/users/me/token", authenticate, async (request, response) => {
+    try {
+        await request.user.removeToken(request.token);
         response.status(200).send(user);
-    }).catch((error) => {
+    } catch (error) {
         response.status(400).send(error);
-    });
+    }
 });
 
 
@@ -41,35 +42,35 @@ app.post("/todos", authenticate, (request, response) => {
     });
 });
 
-app.post("/users/login", (request, response) => {
+app.post("/users/login", async (request, response) => {
     let body = _.pick(request.body, ["email", "password"]);
-    User.findByCredentials(body.email, body.password).then((user) => {
-        user.generateAuthToken().then((token) => {
-            response.header("x-auth", token).send(user);
-        });
-    }).catch((error) => {
+    try {
+        let user = await User.findByCredentials(body.email, body.password);
+        let token = await user.generateAuthToken();
+        response.header("x-auth", token).send(user);
+    } catch (error) {
         response.status(400).send(error);
-    });
+    }
 });
 
-app.post("/users", (request, response) => {
+app.post("/users", async (request, response) => {
     let body = _.pick(request.body, ["email", "password"]);
-    let newUser = new User(body);
-    newUser.save().then((savedUser) => {
+    let user = new User(body);
+    try {
+        let savedUser = await user.save();
         if (!savedUser) {
             console.log("Unable to save User document");
             response.status(404).send();
         } else {
             console.log(JSON.stringify(savedUser, undefined, 2));
             // response.send(savedUser);
-            return savedUser.generateAuthToken();
+            let token = await savedUser.generateAuthToken();
+            response.header("x-auth", token).send(savedUser);
         }
-    }).then((token) => {
-        response.header("x-auth", token).send(newUser);
-    }).catch((error) => {
+    } catch (error) {
         console.log(error);
         response.status(400).send(error);
-    });
+    }
 });
 
 app.get("/users/me", authenticate, (request, response) => {
@@ -91,15 +92,16 @@ app.get("/todos", authenticate, (request, response) => {
     });
 });
 
-app.get("/todos/:id", authenticate, (request, response) => {
+app.get("/todos/:id", authenticate, async (request, response) => {
     let id = request.params.id;
     if (!ObjectID.isValid(id)) {
         response.status(404).send();
     } else {
-        ToDo.findOne({
-            _id: id,
-            _creator: request.user._id
-        }).then((toDoObject) => {
+        try {
+            let toDoObject = await ToDo.findOne({
+                _id: id,
+                _creator: request.user._id
+            });
             if (!toDoObject) {
                 response.status(404).send();
             } else {
@@ -107,10 +109,10 @@ app.get("/todos/:id", authenticate, (request, response) => {
                     toDoObject
                 });
             }
-        }).catch((error) => {
+        } catch (error) {
             console.log(error);
             response.status(400).send(error);
-        });
+        }
     }
 });
 
