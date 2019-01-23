@@ -26,8 +26,11 @@ app.delete("/users/me/token", authenticate, (request, response) => {
 });
 
 
-app.post("/todos", (request, response) => {
-    var todo = new ToDo(request.body);
+app.post("/todos", authenticate, (request, response) => {
+    var todo = new ToDo({
+        text: request.body,
+        _creator: request.user._id
+    });
     todo.save().then((savedObject) => {
         console.log(JSON.stringify(savedObject, undefined, 2));
         response.send(savedObject);
@@ -74,8 +77,10 @@ app.get("/users/me", authenticate, (request, response) => {
 });
 
 
-app.get("/todos", (request, response) => {
-    ToDo.find().then((toDosArray) => {
+app.get("/todos", authenticate, (request, response) => {
+    ToDo.find({
+        _creator: request.user._id
+    }).then((toDosArray) => {
         response.send({
             toDosArray
         })
@@ -86,12 +91,15 @@ app.get("/todos", (request, response) => {
     });
 });
 
-app.get("/todos/:id", (request, response) => {
+app.get("/todos/:id", authenticate, (request, response) => {
     let id = request.params.id;
     if (!ObjectID.isValid(id)) {
         response.status(404).send();
     } else {
-        ToDo.findById(id).then((toDoObject) => {
+        ToDo.findOne({
+            _id: id,
+            _creator: request.user._id
+        }).then((toDoObject) => {
             if (!toDoObject) {
                 response.status(404).send();
             } else {
@@ -106,12 +114,15 @@ app.get("/todos/:id", (request, response) => {
     }
 });
 
-app.delete("/todos/:id", (request, response) => {
+app.delete("/todos/:id", authenticate, (request, response) => {
     let id = request.params.id;
     if (!ObjectID.isValid(id)) {
         response.status(404).send();
     } else {
-        ToDo.findByIdAndRemove(id).then((deletedToDoDocument) => {
+        ToDo.findOneAndRemove({
+            _id: id,
+            _creator: request.user._id
+        }).then((deletedToDoDocument) => {
             if (!deletedToDoDocument) {
                 console.log("Unable to find document by Id: ", id);
                 response.status(404).send();
@@ -127,7 +138,7 @@ app.delete("/todos/:id", (request, response) => {
 });
 
 
-app.patch("/todos/:id", (request, response) => {
+app.patch("/todos/:id", authenticate, (request, response) => {
     let id = request.params.id;
     let body = _.pick(request.body, ["text", "completed"]);
     if (!ObjectID.isValid(id)) {
@@ -139,7 +150,10 @@ app.patch("/todos/:id", (request, response) => {
             body.completed = false;
             body.completedAt = null;
         }
-        ToDo.findByIdAndUpdate(id, {
+        ToDo.findOneAndUpdate({
+            _id: id,
+            _creator: request.user._id
+        }, {
             $set: body
         }, {
             new: true
